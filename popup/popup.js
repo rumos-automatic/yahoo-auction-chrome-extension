@@ -21,6 +21,34 @@ let csvData = null;
 let imageFolderSelected = false;
 let isRunning = false;
 
+// ========================================
+// IndexedDB ヘルパー関数（popup用）
+// ========================================
+
+async function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('yahooAuctionDB', 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('handles')) {
+        db.createObjectStore('handles');
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveDirectoryHandle(dirHandle) {
+  const db = await openDB();
+  const tx = db.transaction('handles', 'readwrite');
+  tx.objectStore('handles').put(dirHandle, 'imageFolder');
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
@@ -94,27 +122,36 @@ async function handleCsvFileSelect(event) {
 }
 
 // 画像フォルダの処理（File System Access API使用）
-async function handleImageFolderSelect(event) {
+async function handleImageFolderSelect() {
   try {
-    // Content Scriptに画像フォルダ選択を指示
-    const tabs = await chrome.tabs.query({
-      url: 'https://auctions.yahoo.co.jp/sell/jp/show/submit*'
-    });
+    addLog('画像フォルダを選択してください...', 'info');
 
-    if (tabs.length === 0) {
-      addLog('ヤフオク出品ページを開いてください', 'error');
-      return;
+    // File System Access API でフォルダ選択
+    const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+
+    // 権限確認
+    const permission = await dirHandle.requestPermission({ mode: 'read' });
+    if (permission !== 'granted') {
+      throw new Error('フォルダアクセスが拒否されました');
     }
 
-    // Content Scriptに指示を送信
-    await chrome.tabs.sendMessage(tabs[0].id, {
-      action: 'selectImageFolder'
-    });
+    // IndexedDBに保存
+    await saveDirectoryHandle(dirHandle);
 
-    addLog('画像フォルダを選択してください（ポップアップが表示されます）', 'info');
+    // UI更新
+    imageFolderSelected = true;
+    imageFolderName.textContent = '選択済み';
+    addLog('画像フォルダを登録しました', 'success');
+    checkReadyState();
 
   } catch (error) {
-    addLog(`エラー: ${error.message}`, 'error');
+    if (error.name === 'AbortError') {
+      addLog('フォルダ選択がキャンセルされました', 'info');
+    } else {
+      addLog(`エラー: ${error.message}`, 'error');
+    }
+    imageFolderSelected = false;
+    imageFolderName.textContent = '未選択';
   }
 }
 
@@ -218,20 +255,6 @@ function handleMessage(message) {
     case 'error':
       handleError(message.error);
       break;
-  }
-
-  // Content Scriptからのフォルダ選択完了メッセージ
-  if (message.action === 'folderSelected') {
-    if (message.success) {
-      imageFolderSelected = true;
-      imageFolderName.textContent = '選択済み';
-      addLog('画像フォルダを登録しました', 'success');
-      checkReadyState();
-    } else {
-      imageFolderSelected = false;
-      imageFolderName.textContent = '未選択';
-      addLog(`フォルダ選択エラー: ${message.error}`, 'error');
-    }
   }
 }
 

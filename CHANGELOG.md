@@ -4,6 +4,34 @@
 
 ---
 
+## [v2.0.1] - 2025-10-01
+
+### 🐛 Bug Fixes
+
+#### Fixed
+- **画像フォルダ選択が機能しない問題を修正**
+  - popup.js で直接 File System Access API を呼び出すように変更
+  - Content Script 経由ではなく popup 内で完結
+  - IndexedDB ヘルパー関数を popup.js に追加
+  - より確実でシンプルな実装に改善
+
+#### Changed
+- **popup.js**
+  - `openDB()` と `saveDirectoryHandle()` を追加
+  - `handleImageFolderSelect()` を書き換え（Content Script への通信を削除）
+  - フォルダ選択ダイアログを popup から直接表示
+
+- **content.js**
+  - `selectImageFolder()` 関数を削除（不要になったため）
+  - メッセージリスナーから `selectImageFolder` ハンドラを削除
+
+#### Technical Details
+- File System Access API は popup コンテキストでも使用可能
+- popup で選択したディレクトリハンドルは IndexedDB で永続化
+- Content Script は出品時に IndexedDB からハンドルを取得
+
+---
+
 ## [v2.0.0] - 2025-10-01
 
 ### 🚀 大規模アーキテクチャ変更

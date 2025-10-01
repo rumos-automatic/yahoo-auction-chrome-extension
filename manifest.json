@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ヤフオク自動出品ツール",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "ヤフオクへの商品自動出品を支援するChrome拡張機能（File System Access API対応）",
   "permissions": [
     "storage",

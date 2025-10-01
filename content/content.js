@@ -40,45 +40,9 @@ async function getDirectoryHandle() {
   });
 }
 
-// ========================================
-// File System Access API
-// ========================================
-
-async function selectImageFolder() {
-  try {
-    const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
-
-    // 権限確認
-    const permission = await dirHandle.requestPermission({ mode: 'read' });
-    if (permission !== 'granted') {
-      throw new Error('フォルダアクセスが拒否されました');
-    }
-
-    // IndexedDBに保存
-    await saveDirectoryHandle(dirHandle);
-
-    console.log('画像フォルダを保存しました');
-
-    chrome.runtime.sendMessage({
-      action: 'folderSelected',
-      success: true
-    });
-
-  } catch (error) {
-    console.error('フォルダ選択エラー:', error);
-    chrome.runtime.sendMessage({
-      action: 'folderSelected',
-      success: false,
-      error: error.message
-    });
-  }
-}
-
 // メッセージリスナー
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'selectImageFolder') {
-    selectImageFolder();
-  } else if (message.action === 'postItem') {
+  if (message.action === 'postItem') {
     postItem(message.item, message.settings)
       .then(() => {
         chrome.runtime.sendMessage({
