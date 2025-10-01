@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "ヤフオク自動出品ツール",
+  "version": "2.0.0",
+  "description": "ヤフオクへの商品自動出品を支援するChrome拡張機能（File System Access API対応）",
+  "permissions": [
+    "storage",
+    "notifications",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://auctions.yahoo.co.jp/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://auctions.yahoo.co.jp/sell/jp/show/submit*"],
+      "js": ["lib/utils.js", "content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

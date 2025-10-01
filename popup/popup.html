@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ヤフオク自動出品ツール</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 ヤフオク自動出品ツール</h1>
+    </header>
+
+    <main>
+      <!-- ファイル選択セクション -->
+      <section class="file-section">
+        <div class="file-input-group">
+          <label for="csvFile">📄 出品CSVファイル</label>
+          <input type="file" id="csvFile" accept=".csv" />
+          <span class="file-name" id="csvFileName">未選択</span>
+        </div>
+
+        <div class="file-input-group">
+          <label for="imageFolder">🖼️ 画像フォルダ</label>
+          <input type="file" id="imageFolder" webkitdirectory directory multiple />
+          <span class="file-name" id="imageFolderName">未選択</span>
+        </div>
+      </section>
+
+      <!-- 設定セクション -->
+      <section class="settings-section">
+        <h2>⚙️ 設定</h2>
+        <div class="setting-row">
+          <label for="retryCount">再試行回数:</label>
+          <input type="number" id="retryCount" min="1" max="10" value="3" />
+        </div>
+
+        <div class="setting-row">
+          <label for="chatworkToggle">ChatWork通知:</label>
+          <label class="switch">
+            <input type="checkbox" id="chatworkToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row chatwork-settings" id="chatworkSettings" style="display: none;">
+          <div class="chatwork-input-group">
+            <label for="chatworkApiKey">API Key:</label>
+            <input type="password" id="chatworkApiKey" placeholder="ChatWork APIキー" />
+          </div>
+          <div class="chatwork-input-group">
+            <label for="chatworkRoomId">Room ID:</label>
+            <input type="text" id="chatworkRoomId" placeholder="ルームID" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 進捗セクション -->
+      <section class="progress-section">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">0/0 出品完了</div>
+      </section>
+
+      <!-- ステータス表示 -->
+      <section class="status-section">
+        <div class="status-box" id="statusBox">
+          <span class="status-indicator" id="statusIndicator">●</span>
+          <span id="statusText">出品準備中...</span>
+        </div>
+      </section>
+
+      <!-- 操作ボタン -->
+      <section class="action-section">
+        <button id="startButton" class="btn btn-primary" disabled>
+          🚀 自動出品開始
+        </button>
+        <button id="stopButton" class="btn btn-secondary" style="display: none;">
+          ⏸️ 停止
+        </button>
+      </section>
+
+      <!-- ログセクション -->
+      <section class="log-section">
+        <details>
+          <summary>📝 実行ログ</summary>
+          <div class="log-container" id="logContainer">
+            <div class="log-entry">ログがここに表示されます...</div>
+          </div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

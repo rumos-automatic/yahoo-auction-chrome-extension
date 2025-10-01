@@ -1,0 +1,44 @@
+# Chrome拡張機能関連
+*.crx
+*.pem
+*.zip
+
+# OS関連
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# エディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# テストデータ
+test_images/
+test_data/
+*.csv
+!sample.csv
+
+# ログファイル
+*.log
+
+# 一時ファイル
+tmp/
+temp/
+
+# Node.js（将来的に使用する可能性）
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# 設定ファイル（個人情報含む可能性）
+config.local.js
+secrets.json
+
+# ビルド出力
+dist/
+build/
