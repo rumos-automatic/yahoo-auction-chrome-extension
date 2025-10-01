@@ -100,12 +100,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // 商品出品メイン処理
 async function postItem(item, settings) {
   try {
-    // 広告を閉じる
+    // 処理開始時に広告を閉じる
     await closeAdIfExists();
 
     // 画像アップロード（File System Access API使用）
     await uploadImages(item);
     await sleep(3000);
+
+    // 画像アップロード後に広告チェック
+    await closeAdIfExists();
 
     // カテゴリ設定
     await setCategory(item['カテゴリ']);
@@ -137,13 +140,22 @@ async function postItem(item, settings) {
       await sleep(randomDelay(1000, 3000));
     }
 
+    // 確認ボタンクリック前に広告チェック
+    await closeAdIfExists();
+
     // 確認ボタンをクリック
     await clickConfirmButton();
     await sleep(randomDelay(1000, 3000));
 
+    // 出品ボタンクリック前に広告チェック
+    await closeAdIfExists();
+
     // 出品ボタンをクリック
     await clickSubmitButton();
     await sleep(randomDelay(2000, 8000));
+
+    // 出品完了後に広告チェック
+    await closeAdIfExists();
 
     // 続けて出品するリンクをクリック
     await clickContinueLink();
@@ -156,17 +168,58 @@ async function postItem(item, settings) {
   }
 }
 
-// 広告を閉じる
+// 広告を閉じる（強化版）
 async function closeAdIfExists() {
   try {
-    const adCloseButton = await waitForElement('#js-CampaignPRModal_submit', 5000, false);
-    if (adCloseButton) {
-      adCloseButton.click();
-      await sleep(500);
+    // 方法1: IDセレクタで試行
+    let adCloseButton = await waitForElement('#js-CampaignPRModal_submit', 3000, false);
+
+    // 方法2: XPathで試行（方法1で見つからなかった場合）
+    if (!adCloseButton) {
+      adCloseButton = await waitForElement(
+        '//*[@id="js-CampaignPRModal_submit"]',
+        3000,
+        false,
+        true  // XPath使用
+      );
     }
+
+    // 広告ボタンが見つかった場合
+    if (adCloseButton) {
+      console.log('広告を検出しました。自動的に閉じます...');
+      adCloseButton.click();
+      await sleep(1000);
+      console.log('広告を閉じました');
+      return true;
+    }
+
+    return false;
   } catch (error) {
     // 広告がない場合は無視
+    return false;
   }
+}
+
+// ページロード時に広告を自動クローズ
+async function autoCloseAdsOnLoad() {
+  // ページが完全に読み込まれるまで待機
+  await sleep(2000);
+
+  // 広告を閉じる（最大3回試行）
+  for (let i = 0; i < 3; i++) {
+    const closed = await closeAdIfExists();
+    if (closed) {
+      break;
+    }
+    await sleep(1000);
+  }
+}
+
+// ページロード時に実行
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', autoCloseAdsOnLoad);
+} else {
+  autoCloseAdsOnLoad();
 }
 
 // 画像アップロード（File System Access API使用）
