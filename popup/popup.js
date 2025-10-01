@@ -1,6 +1,6 @@
 // DOM要素の取得
 const csvFileInput = document.getElementById('csvFile');
-const imageFolderInput = document.getElementById('imageFolder');
+const imageFolderButton = document.getElementById('imageFolderButton');
 const csvFileName = document.getElementById('csvFileName');
 const imageFolderName = document.getElementById('imageFolderName');
 const retryCountInput = document.getElementById('retryCount');
@@ -51,8 +51,8 @@ function setupEventListeners() {
   // CSVファイル選択
   csvFileInput.addEventListener('change', handleCsvFileSelect);
 
-  // 画像フォルダ選択
-  imageFolderInput.addEventListener('change', handleImageFolderSelect);
+  // 画像フォルダ選択（ボタンクリック）
+  imageFolderButton.addEventListener('click', handleImageFolderSelect);
 
   // ChatWorkトグル
   chatworkToggle.addEventListener('change', () => {
