@@ -10,6 +10,9 @@ let listingState = {
 // メッセージリスナー
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
+    case 'selectImageFolder':
+      handleSelectImageFolder(sendResponse);
+      return true; // 非同期レスポンス
     case 'startListing':
       handleStartListing(message.data);
       break;
@@ -25,6 +28,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return true; // 非同期レスポンスを許可
 });
+
+// 画像フォルダ選択処理（background経由）
+async function handleSelectImageFolder(sendResponse) {
+  try {
+    // 新しいタブを開いてそこでフォルダ選択
+    const tab = await chrome.tabs.create({
+      url: chrome.runtime.getURL('picker.html'),
+      active: true
+    });
+
+    // picker.html からの応答を待つ
+    const listener = (msg, sender) => {
+      if (msg.action === 'folderSelected' && sender.tab.id === tab.id) {
+        chrome.runtime.onMessage.removeListener(listener);
+        chrome.tabs.remove(tab.id);
+        sendResponse(msg);
+      }
+    };
+    chrome.runtime.onMessage.addListener(listener);
+
+  } catch (error) {
+    sendResponse({ success: false, error: error.message });
+  }
+}
 
 // 出品開始処理
 async function handleStartListing(data) {

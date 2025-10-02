@@ -21,34 +21,6 @@ let csvData = null;
 let imageFolderSelected = false;
 let isRunning = false;
 
-// ========================================
-// IndexedDB ヘルパー関数（popup用）
-// ========================================
-
-async function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('yahooAuctionDB', 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('handles')) {
-        db.createObjectStore('handles');
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function saveDirectoryHandle(dirHandle) {
-  const db = await openDB();
-  const tx = db.transaction('handles', 'readwrite');
-  tx.objectStore('handles').put(dirHandle, 'imageFolder');
-  return new Promise((resolve, reject) => {
-    tx.oncomplete = resolve;
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
@@ -121,35 +93,31 @@ async function handleCsvFileSelect(event) {
   }
 }
 
-// 画像フォルダの処理（File System Access API使用）
+// 画像フォルダの処理（background経由）
 async function handleImageFolderSelect() {
   try {
     addLog('画像フォルダを選択してください...', 'info');
 
-    // File System Access API でフォルダ選択
-    const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
-
-    // 権限確認
-    const permission = await dirHandle.requestPermission({ mode: 'read' });
-    if (permission !== 'granted') {
-      throw new Error('フォルダアクセスが拒否されました');
-    }
-
-    // IndexedDBに保存
-    await saveDirectoryHandle(dirHandle);
-
-    // UI更新
-    imageFolderSelected = true;
-    imageFolderName.textContent = '選択済み';
-    addLog('画像フォルダを登録しました', 'success');
-    checkReadyState();
+    // background.js 経由でフォルダ選択（新しいタブで実行）
+    chrome.runtime.sendMessage(
+      { action: 'selectImageFolder' },
+      (response) => {
+        if (response && response.success) {
+          imageFolderSelected = true;
+          imageFolderName.textContent = '選択済み';
+          addLog('画像フォルダを登録しました', 'success');
+          checkReadyState();
+        } else {
+          imageFolderSelected = false;
+          imageFolderName.textContent = '未選択';
+          addLog(`エラー: ${response?.error || '不明なエラー'}`, 'error');
+        }
+      }
+    );
 
   } catch (error) {
-    if (error.name === 'AbortError') {
-      addLog('フォルダ選択がキャンセルされました', 'info');
-    } else {
-      addLog(`エラー: ${error.message}`, 'error');
-    }
+    console.error('handleImageFolderSelect エラー:', error);
+    addLog(`エラー: ${error.message}`, 'error');
     imageFolderSelected = false;
     imageFolderName.textContent = '未選択';
   }
